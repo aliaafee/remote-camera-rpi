@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "camera-platform"
+		},
+		{
+			"path": "camera-server"
+		}
+	],
+	"settings": {}
+}
