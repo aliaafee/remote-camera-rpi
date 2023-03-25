@@ -1,5 +1,3 @@
-# Web streaming example
-# Source code from the official PiCamera package
 # http://picamera.readthedocs.io/en/latest/recipes2.html#web-streaming
 
 import io
@@ -23,14 +21,18 @@ TILT_SPEED = 5
 bus = smbus.SMBus(1)
 
 
-def send_command(command1, command2):
-    command1 = int(command1 + 90)
-    command2 = int(command2 + 90)
+def set_platfrom_angles(pan_angle, tilt_angle):
+    pan_angle = int(pan_angle + 90)
+    tilt_angle = int(tilt_angle + 90)
 
-    bus.write_i2c_block_data(DEVICE_ADDRESS, 0, [command1, command2])
+    bus.write_i2c_block_data(DEVICE_ADDRESS, 0, [pan_angle, tilt_angle])
 
 
-PAGE="""\
+def get_platform_angles():
+    bus.write_i2c_block_data(DEVICE_ADDRESS, 0)
+
+
+PAGE = """\
 <html>
 <head>
 <title>Raspberry Pi - Surveillance Camera</title>
@@ -66,6 +68,7 @@ function sendPanTilt() {
 </html>
 """
 
+
 class StreamingOutput(object):
     def __init__(self):
         self.frame = None
@@ -82,6 +85,7 @@ class StreamingOutput(object):
                 self.condition.notify_all()
             self.buffer.seek(0)
         return self.buffer.write(buf)
+
 
 class StreamingHandler(server.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -102,7 +106,8 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_header('Age', 0)
             self.send_header('Cache-Control', 'no-cache, private')
             self.send_header('Pragma', 'no-cache')
-            self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=FRAME')
+            self.send_header(
+                'Content-Type', 'multipart/x-mixed-replace; boundary=FRAME')
             self.end_headers()
             try:
                 while True:
@@ -131,19 +136,21 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                 tilt = int(q['tilt'][0])
                 if tilt >= -90 and tilt <= 90:
                     camera_tilt = tilt
-            send_command(camera_pan, camera_tilt)
+            set_platfrom_angles(camera_pan, camera_tilt)
         else:
             print(self.path)
             self.send_error(404)
             self.end_headers()
 
+
 class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
+
 with picamera.PiCamera(resolution='320x240', framerate=24) as camera:
     output = StreamingOutput()
-    #Uncomment the next line to change your Pi's Camera rotation (in degrees)
+    # Uncomment the next line to change your Pi's Camera rotation (in degrees)
     #camera.rotation = 90
     camera.start_recording(output, format='mjpeg')
     try:

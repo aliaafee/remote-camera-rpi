@@ -35,6 +35,13 @@ void receiveEvent(int howMany)
   digitalWrite(LED_BUILTIN, LOW);
 }
 
+void requestEvent() {
+  int command2 = panAngle + 90;
+  int command3 = tiltAngle + 90;
+  Wire.write(command2);
+  Wire.write(command3);
+}
+
 void setup()
 {
   panAngle = 0;
@@ -43,6 +50,7 @@ void setup()
   Wire.begin(DEVICE_ID);
 
   Wire.onReceive(receiveEvent);
+  Wire.onRequest(requestEvent);
 
   cameraPlatform.begin();
   cameraPlatform.home();
