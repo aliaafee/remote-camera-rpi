@@ -29,13 +29,24 @@ def set_platfrom_angles(pan_angle, tilt_angle):
 
 
 def get_platform_angles():
-    bus.write_i2c_block_data(DEVICE_ADDRESS, 0)
+    result = []
+    record = False
+    for i in range(10):
+        item = bus.read_byte(DEVICE_ADDRESS)
+        if record:
+            if item == 255:
+                return tuple(result)
+            result.append(item)
+        else:
+            if item == 255:
+                record = True
+    return tuple(result)
 
 
 PAGE = """\
 <html>
 <head>
-<title>Raspberry Pi - Surveillance Camera</title>
+<title>Surveillance Camera</title>
 <script>
 
 var tiltAngle = 0;
@@ -58,7 +69,6 @@ function sendPanTilt() {
 </script>
 </head>
 <body>
-<center><h1>Raspberry Pi - Surveillance Camera</h1></center>
 <center><img src="stream.mjpg" width="640" height="480"></center>
 <button onClick="pan(1)"/> &#8678; </button>
 <button onClick="pan(-1)"/> &#8680; </button>
@@ -125,6 +135,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                     'Removed streaming client %s: %s',
                     self.client_address, str(e))
         elif o.path == '/move':
+            print(get_platform_angles())
             q = parse_qs(o.query)
             camera_pan = 0
             camera_tilt = 0

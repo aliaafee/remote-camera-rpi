@@ -35,11 +35,30 @@ void receiveEvent(int howMany)
   digitalWrite(LED_BUILTIN, LOW);
 }
 
-void requestEvent() {
-  int command2 = panAngle + 90;
-  int command3 = tiltAngle + 90;
-  Wire.write(command2);
-  Wire.write(command3);
+int requestCount = 0;
+
+void requestEvent()
+{
+  byte bval;
+
+  switch (requestCount)
+  {
+  case 0:
+    bval = 255;
+    break;
+  case 1:
+    bval = panAngle + 90;
+    break;
+  case 2:
+    bval = tiltAngle + 90;
+    break;
+  }
+
+  Wire.write(bval);
+
+  requestCount += 1;
+  if (requestCount > 2)
+    requestCount = 0;
 }
 
 void setup()
